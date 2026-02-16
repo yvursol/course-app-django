@@ -17,17 +17,23 @@ def submit(request, question_id):
         
         if choice_id:
             choice = get_object_or_404(Choice, pk=choice_id)
-            # Save submission
-            submission = Submission.objects.create(
+            # Save or update submission
+            submission, created = Submission.objects.update_or_create(
                 user=request.user,
                 question=question,
-                choice=choice
+                defaults={'choice': choice}
             )
             messages.success(request, 'Answer submitted successfully!')
         else:
             messages.error(request, 'Please select an answer.')
             
     return redirect('course_details', course_id=question.lesson.course.id)
+
+def is_get_score(question, selected_choice):
+    """Check if the selected choice is correct and return points"""
+    if selected_choice and selected_choice.is_correct:
+        return question.points
+    return 0
 
 @login_required
 def show_exam_result(request, course_id):
@@ -42,34 +48,52 @@ def show_exam_result(request, course_id):
         question__in=questions
     ).select_related('question', 'choice')
     
-    # Calculate score
+    # Create a dictionary of submissions by question id
+    submission_dict = {s.question.id: s for s in submissions}
+    
+    # Calculate score and collect selected IDs
     total_points = 0
     earned_points = 0
     results = []
+    selected_ids = {}  # Dictionary to store selected choice IDs per question
     
     for question in questions:
         total_points += question.points
-        user_submission = submissions.filter(question=question).first()
-        is_correct = False
+        user_submission = submission_dict.get(question.id)
+        selected_choice = user_submission.choice if user_submission else None
         
-        if user_submission and user_submission.choice.is_correct:
-            is_correct = True
-            earned_points += question.points
+        # Store selected choice ID
+        if selected_choice:
+            selected_ids[question.id] = selected_choice.id
+        
+        # Use the helper function to get score
+        score = is_get_score(question, selected_choice)
+        earned_points += score
+        
+        is_correct = (score > 0)
             
         results.append({
             'question': question,
             'submission': user_submission,
-            'is_correct': is_correct
+            'selected_choice': selected_choice,
+            'is_correct': is_correct,
+            'score': score
         })
     
-    score_percentage = (earned_points / total_points * 100) if total_points > 0 else 0
+    # Calculate grade and possible
+    grade = earned_points
+    possible = total_points
+    score_percentage = (grade / possible * 100) if possible > 0 else 0
     
     context = {
         'course': course,
         'results': results,
+        'grade': grade,  # Добавлено
+        'possible': possible,  # Добавлено
         'earned_points': earned_points,
         'total_points': total_points,
-        'score_percentage': score_percentage
+        'score_percentage': score_percentage,
+        'selected_ids': selected_ids,  # Добавлено
     }
     
     return render(request, 'myonlinecourse/exam_result.html', context)
