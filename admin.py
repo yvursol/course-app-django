@@ -18,17 +18,21 @@ class QuestionAdmin(admin.ModelAdmin):
     inlines = [ChoiceInline]
     list_display = ['id', 'question_text', 'lesson', 'points']
     list_filter = ['lesson']
+    search_fields = ['question_text']  # Можно добавить для улучшения
 
-# LessonAdmin с QuestionInline и list_display
+# LessonAdmin с QuestionInline и всеми атрибутами
 class LessonAdmin(admin.ModelAdmin):
-    inlines = [QuestionInline]  # Добавлено!
-    list_display = ['title', 'course', 'order']  # Добавлено!
-    list_filter = ['course']
+    inlines = [QuestionInline]
+    list_display = ['title', 'course', 'order']
+    list_filter = ['course']  # ✅ Это уже есть!
+    search_fields = ['title']  # Можно добавить поиск по названию
+    ordering = ['course', 'order']  # Сортировка
 
+# Регистрируем все модели
 admin.site.register(Course)
-admin.site.register(Lesson, LessonAdmin)  # С кастомным админом
-admin.site.register(Instructor)  # Добавлено!
-admin.site.register(Learner)     # Добавлено!
+admin.site.register(Lesson, LessonAdmin)
+admin.site.register(Instructor)
+admin.site.register(Learner)
 admin.site.register(Question, QuestionAdmin)
 admin.site.register(Choice)
 admin.site.register(Submission)
