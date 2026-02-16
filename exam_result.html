@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Results - {{ course.name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <!-- Поздравление и результат -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h1>🎉 Congratulations! 🎉</h1>
+            </div>
+            <div class="card-body text-center">
+                <h2>You have successfully completed the exam!</h2>
+                <h3 class="display-4 my-4">
+                    Your Score: {{ earned_points }} / {{ total_points }}
+                </h3>
+                <h4>
+                    Percentage: {{ score_percentage|floatformat:1 }}%
+                </h4>
+                {% if score_percentage >= 70 %}
+                    <div class="alert alert-success">✅ Passed with distinction!</div>
+                {% elif score_percentage >= 50 %}
+                    <div class="alert alert-info">📘 Good job!</div>
+                {% else %}
+                    <div class="alert alert-warning">📚 Keep practicing!</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Детальные результаты по каждому вопросу -->
+        <h3>Detailed Results:</h3>
+        <div class="row mt-3">
+            {% for result in results %}
+            <div class="col-md-12 mb-3">
+                <div class="card {% if result.is_correct %}border-success{% else %}border-danger{% endif %}">
+                    <div class="card-header {% if result.is_correct %}bg-success text-white{% else %}bg-danger text-white{% endif %}">
+                        <strong>Question {{ forloop.counter }}:</strong> {{ result.question.question_text }}
+                        <span class="float-end">Points: {{ result.question.points }}</span>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Your answer:</strong> 
+                            {% if result.submission %}
+                                {{ result.submission.choice.choice_text }}
+                            {% else %}
+                                <span class="text-warning">Not answered</span>
+                            {% endif %}
+                        </p>
+                        {% if not result.is_correct %}
+                        <p class="text-success">
+                            <strong>Correct answer:</strong> 
+                            {% for choice in result.question.choices.all %}
+                                {% if choice.is_correct %}
+                                    {{ choice.choice_text }}
+                                {% endif %}
+                            {% endfor %}
+                        </p>
+                        {% endif %}
+                        <p class="mb-0">
+                            <strong>Result:</strong> 
+                            {% if result.is_correct %}
+                                <span class="text-success">✓ Correct (+{{ result.question.points }} points)</span>
+                            {% else %}
+                                <span class="text-danger">✗ Incorrect (0 points)</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-4 mb-5">
+            <a href="/" class="btn btn-primary">Back to Home</a>
+        </div>
+    </div>
+</body>
+</html>
