@@ -25,7 +25,6 @@ class LessonAdmin(admin.ModelAdmin):
     list_display = ['title', 'course', 'order']  # Добавлено!
     list_filter = ['course']
 
-# Регистрируем ВСЕ модели
 admin.site.register(Course)
 admin.site.register(Lesson, LessonAdmin)  # С кастомным админом
 admin.site.register(Instructor)  # Добавлено!
